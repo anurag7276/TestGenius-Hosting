@@ -61,8 +61,8 @@ app.use(passport.session());
 
 // --- API Routes ---
 app.use('/api', authRoutes);
-app.use('/api', githubRoutes);
-app.use('/api', aiRoutes);
+app.use('/api/github', githubRoutes);
+app.use('/api/ai', aiRoutes);
 
 // // --- Serve React Frontend in Production ---
 // if (process.env.NODE_ENV === 'production') {
