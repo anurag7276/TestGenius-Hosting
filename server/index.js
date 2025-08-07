@@ -28,10 +28,32 @@ const passport = configurePassport();
 const sessionConfig = createSessionConfig();
 
 // --- Middlewares ---
-app.use(cors({
-  origin: '*',
-  credentials: true
-}));
+const allowedOrigins = [
+  'https://test-genius-hosting.vercel.app/', // Your frontend on Vercel
+  'http://localhost:3000' // Optional: for local development
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // If the origin of the request is in our allowed list, permit it.
+    // Also, allow requests with no origin, like mobile apps or tools like Postman.
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      callback(null, true);
+    } else {
+      // Otherwise, reject the request.
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true, // Allow cookies and authentication headers
+};
+
+// Use the configured CORS middleware globally.
+app.use(cors(corsOptions));
+
+
+
+
+
 app.use(express.json());
 app.use(session(sessionConfig));
 app.use(passport.initialize());
