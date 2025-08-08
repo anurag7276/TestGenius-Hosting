@@ -1,4 +1,3 @@
-// index.js
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -30,27 +29,22 @@ const sessionConfig = createSessionConfig();
 
 // --- Middlewares ---
 const allowedOrigins = [
-  'https://test-genius-hosting.vercel.app', // Corrected: removed trailing slash
-  'http://localhost:5173' // For local development
+  'https://test-genius-hosting.vercel.app',
+  'http://localhost:5173'
 ];
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // If the origin of the request is in our allowed list, permit it.
-    // Also, allow requests with no origin, like mobile apps or tools like Postman.
     if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
       callback(null, true);
     } else {
-      // Otherwise, reject the request.
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true, // Allow cookies and authentication headers
+  credentials: true,
 };
 
-// Use the configured CORS middleware globally.
 app.use(cors(corsOptions));
-
 app.use(express.json());
 app.use(session(sessionConfig));
 app.use(passport.initialize());
@@ -62,7 +56,6 @@ app.use('/api/github', githubRoutes);
 app.use('/api/ai', aiRoutes);
 
 // --- Serve React Frontend in Production ---
-// CORRECTED: The path is now set to 'dist' for Vite projects.
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../client/dist')));
   app.get('*', (req, res) => {
@@ -75,12 +68,9 @@ app.get("/", async(req, res) => {
 });
 
 // --- Start the Server ---
-// We added '0.0.0.0' to ensure the server listens on all network interfaces,
-// which is required for platforms like Render.
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });
-
 
 
 
