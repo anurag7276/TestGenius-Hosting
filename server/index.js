@@ -20,27 +20,30 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+// Use the PORT environment variable provided by Render, defaulting to 3001 for local development
 const PORT = process.env.PORT || 3001;
 
 // Call the new configurePassport function to set up Passport
 const passport = configurePassport();
 
 // Call the new createSessionConfig function to get the config object
+// The session middleware requires a secret, so let's check for it.
+if (!process.env.SESSION_SECRET) {
+  console.error("FATAL ERROR: SESSION_SECRET is not defined. Please set it in your environment variables.");
+  // Exit the process to prevent the server from running in an insecure state.
+  process.exit(1);
+}
 const sessionConfig = createSessionConfig();
 
 // --- CORS Middleware Configuration ---
 if (process.env.NODE_ENV === 'production') {
-  // The new, more robust regex will match the Render URL OR any subdomain of vercel.app
   const allowedOriginsRegex = /^(https:\/\/testgenius-hosting\.onrender\.com|https:\/\/.*\.vercel\.app)$/;
 
   const corsOptions = {
     origin: (origin, callback) => {
-      // Allow requests with no origin (like a cURL request or a same-origin request).
-      // Check if the origin matches our new, more flexible regular expression.
       if (!origin || allowedOriginsRegex.test(origin)) {
         callback(null, true);
       } else {
-        // Log the exact origin that was blocked for easier debugging.
         console.error(`CORS blocked request from origin: ${origin}`);
         callback(new Error('Not allowed by CORS'));
       }
@@ -49,7 +52,6 @@ if (process.env.NODE_ENV === 'production') {
   };
   app.use(cors(corsOptions));
 } else {
-  // In development, we allow all origins for easy testing.
   app.use(cors({
     origin: '*',
     credentials: true,
@@ -63,13 +65,11 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // --- API Routes ---
-// It is CRITICAL that all API routes are defined BEFORE the static file serving.
 app.use('/api', authRoutes);
 app.use('/api/github', githubRoutes);
 app.use('/api/ai', aiRoutes);
 
 // --- Serve React Frontend in Production ---
-// This block must be placed AFTER all API routes.
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../client/dist')));
 
@@ -79,6 +79,8 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // --- Start the Server ---
+// The server must listen on the port provided by the hosting environment.
+// This is critical for Render to detect that the service is running.
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });
