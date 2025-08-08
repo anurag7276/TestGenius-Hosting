@@ -8,23 +8,40 @@ import session from 'express-session';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import passport from 'passport'; // Passport import moved here for clarity
+import { Strategy as GitHubStrategy } from 'passport-github2'; // GitHub Strategy import
 
 // Import modularized components
-import configurePassport from './middleware/passportConfig.js';
 import { createSessionConfig } from './config/sessionConfig.js';
 import authRoutes from './routes/authRoutes.js';
-import githubRoutes from './routes/githubRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-// Use the PORT environment variable provided by Render, defaulting to 3001 for local development
 const PORT = process.env.PORT || 3001;
 
-// Call the new configurePassport function to set up Passport
-const passport = configurePassport();
+// --- Configure Passport and GitHub Strategy ---
+passport.use(new GitHubStrategy({
+    clientID: process.env.GITHUB_CLIENT_ID,
+    clientSecret: process.env.GITHUB_CLIENT_SECRET,
+    callbackURL: "https://testgenius-hosting.onrender.com/api/github/callback"
+  },
+  function(accessToken, refreshToken, profile, done) {
+    // In a real application, you would find or create a user in your database here
+    // For this example, we'll just return the profile
+    return done(null, profile);
+  }
+));
+
+passport.serializeUser(function(user, done) {
+  done(null, user);
+});
+
+passport.deserializeUser(function(user, done) {
+  done(null, user);
+});
 
 // Call the new createSessionConfig function to get the config object
 if (!process.env.SESSION_SECRET) {
@@ -35,13 +52,10 @@ const sessionConfig = createSessionConfig();
 
 // --- CORS Middleware Configuration ---
 if (process.env.NODE_ENV === 'production') {
-  // This regular expression allows requests from the Render production URL
-  // AND any subdomain of vercel.app, which should cover all your preview deployments.
   const allowedOriginsRegex = /^(https:\/\/testgenius-hosting\.onrender\.com|https:\/\/.*\.vercel\.app)$/;
 
   const corsOptions = {
     origin: (origin, callback) => {
-      // Allow requests with no origin (like a cURL request or a same-origin request).
       if (!origin || allowedOriginsRegex.test(origin)) {
         callback(null, true);
       } else {
@@ -53,7 +67,6 @@ if (process.env.NODE_ENV === 'production') {
   };
   app.use(cors(corsOptions));
 } else {
-  // In development, we allow all origins for easy testing.
   app.use(cors({
     origin: '*',
     credentials: true,
@@ -67,8 +80,20 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // --- API Routes ---
+// The GitHub auth routes are now defined directly in this file
+app.get('/api/github/login', passport.authenticate('github', { scope: ['user:email'] }));
+
+app.get('/api/github/callback',
+  passport.authenticate('github', { failureRedirect: '/login' }),
+  (req, res) => {
+    // On successful authentication, redirect to the main client URL.
+    // This is the crucial part that was likely causing the problem.
+    res.redirect('https://testgenius-hosting.onrender.com');
+  }
+);
+
+// Other API routes are defined as before
 app.use('/api', authRoutes);
-app.use('/api/github', githubRoutes);
 app.use('/api/ai', aiRoutes);
 
 // --- Serve React Frontend in Production ---
@@ -84,6 +109,11 @@ if (process.env.NODE_ENV === 'production') {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+
+
+
+
 
 
 
