@@ -5,8 +5,8 @@ import { getRepos, getFiles, createPullRequest } from '../controllers/githubCont
 
 const router = Router();
 
-router.get('/github/repos', ensureAuthenticated, getRepos);
-router.get('/github/files', ensureAuthenticated, getFiles);
-router.post('/github/pr', ensureAuthenticated, createPullRequest);
+router.get('/repos', ensureAuthenticated, getRepos);
+router.get('/files', ensureAuthenticated, getFiles);
+router.post('/pr', ensureAuthenticated, createPullRequest);
 
 export default router;
