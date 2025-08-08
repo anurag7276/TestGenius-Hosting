@@ -34,7 +34,6 @@
 
 
 
-
 // TestGenius/server/config/sessionConfig.js
 
 import session from 'express-session';
@@ -44,12 +43,10 @@ import MongoStore from 'connect-mongo';
 export function createSessionConfigWithMongo() {
   if (!process.env.SESSION_SECRET) {
     console.error("FATAL ERROR: SESSION_SECRET is not defined. Please set it in your environment variables.");
-    // This will stop the server from running if the secret is missing.
     process.exit(1); 
   }
 
   // Use a persistent store for sessions. MemoryStore is not for production.
-  // We'll use MongoDB to store sessions.
   const sessionStore = MongoStore.create({
     mongoUrl: process.env.MONGO_URI, // Connection string to your MongoDB database
     collectionName: 'sessions',      // The name of the collection to store sessions
@@ -65,9 +62,10 @@ export function createSessionConfigWithMongo() {
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
-      sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000, // Cookie expiration in milliseconds (24 hours)
+      sameSite: 'none',  // <-- CRITICAL CHANGE: Use 'none' for cross-site cookies
+      maxAge: 24 * 60 * 60 * 1000,
     },
     store: sessionStore,
+    proxy: true, // <-- CRITICAL CHANGE: Trust the proxy headers from Render
   };
 }

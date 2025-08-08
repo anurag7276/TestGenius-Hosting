@@ -97,7 +97,6 @@
 
 
 
-
 // TestGenius/server/index.js
 
 import dotenv from 'dotenv';
@@ -110,9 +109,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import passport from 'passport';
 import { Strategy as GitHubStrategy } from 'passport-github2';
-
-// Import the new modularized session configuration
-import { createSessionConfigWithMongo } from './config/sessionConfig.js'; 
+import { createSessionConfigWithMongo } from './config/sessionConfig.js';
 import authRoutes from './routes/authRoutes.js';
 import githubRoutes from './routes/githubRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
@@ -127,7 +124,6 @@ const PORT = process.env.PORT || 3001;
 passport.use(new GitHubStrategy({
   clientID: process.env.GITHUB_CLIENT_ID,
   clientSecret: process.env.GITHUB_CLIENT_SECRET,
-  // The callbackURL must be the production URL for Render
   callbackURL: process.env.GITHUB_CALLBACK_URL
 },
 function(accessToken, refreshToken, profile, done) {
@@ -146,14 +142,11 @@ passport.deserializeUser(function(user, done) {
 // Create the new session configuration with MongoDB store
 const sessionConfig = createSessionConfigWithMongo();
 
-// --- CORS Middleware Configuration ---
-// This robust regex handles Render's URL, all Vercel dynamic subdomains,
-// and localhost for local development.
+// --- IMPORTANT: CORS Middleware must be before Session Middleware ---
+// The regex handles Render's URL, all Vercel dynamic subdomains, and localhost.
 const allowedOriginsRegex = /^(https:\/\/testgenius-hosting\.onrender\.com|https:\/\/.*\.vercel\.app|http:\/\/localhost:5173)$/;
-
 const corsOptions = {
   origin: (origin, callback) => {
-    // If the origin is allowed by our regex, permit the request.
     if (!origin || allowedOriginsRegex.test(origin)) {
       callback(null, true);
     } else {
@@ -161,12 +154,13 @@ const corsOptions = {
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true,
+  credentials: true, // This is crucial for allowing cookies to be sent
 };
 app.use(cors(corsOptions));
+app.use(express.json());
 
 // --- Other Middlewares ---
-app.use(express.json());
+// The session middleware needs to be after CORS and body parser
 app.use(session(sessionConfig));
 app.use(passport.initialize());
 app.use(passport.session());
