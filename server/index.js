@@ -27,20 +27,21 @@ const PORT = process.env.PORT || 3001;
 const passport = configurePassport();
 
 // Call the new createSessionConfig function to get the config object
-// The session middleware requires a secret, so let's check for it.
 if (!process.env.SESSION_SECRET) {
   console.error("FATAL ERROR: SESSION_SECRET is not defined. Please set it in your environment variables.");
-  // Exit the process to prevent the server from running in an insecure state.
   process.exit(1);
 }
 const sessionConfig = createSessionConfig();
 
 // --- CORS Middleware Configuration ---
 if (process.env.NODE_ENV === 'production') {
+  // This regular expression allows requests from the Render production URL
+  // AND any subdomain of vercel.app, which should cover all your preview deployments.
   const allowedOriginsRegex = /^(https:\/\/testgenius-hosting\.onrender\.com|https:\/\/.*\.vercel\.app)$/;
 
   const corsOptions = {
     origin: (origin, callback) => {
+      // Allow requests with no origin (like a cURL request or a same-origin request).
       if (!origin || allowedOriginsRegex.test(origin)) {
         callback(null, true);
       } else {
@@ -52,6 +53,7 @@ if (process.env.NODE_ENV === 'production') {
   };
   app.use(cors(corsOptions));
 } else {
+  // In development, we allow all origins for easy testing.
   app.use(cors({
     origin: '*',
     credentials: true,
@@ -79,11 +81,10 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // --- Start the Server ---
-// The server must listen on the port provided by the hosting environment.
-// This is critical for Render to detect that the service is running.
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
 
 
 
