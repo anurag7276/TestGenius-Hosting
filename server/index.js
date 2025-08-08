@@ -96,7 +96,6 @@
 
 
 
-
 // TestGenius/server/index.js
 
 import dotenv from 'dotenv';
@@ -126,24 +125,29 @@ passport.use(new GitHubStrategy({
   clientSecret: process.env.GITHUB_CLIENT_SECRET,
   callbackURL: process.env.GITHUB_CALLBACK_URL
 },
+// This is the updated callback function
 function(accessToken, refreshToken, profile, done) {
+  // We now attach the accessToken to the profile object before storing it.
+  profile.accessToken = accessToken;
   return done(null, profile);
 }
 ));
 
+// --- Updated serialization and deserialization functions ---
 passport.serializeUser(function(user, done) {
+  // We now save the entire user object, including the token, to the session.
   done(null, user);
 });
 
 passport.deserializeUser(function(user, done) {
+  // We retrieve the user object from the session.
   done(null, user);
 });
 
-// Create the new session configuration with MongoDB store
+// Create the session configuration
 const sessionConfig = createSessionConfigWithMongo();
 
 // --- IMPORTANT: CORS Middleware must be before Session Middleware ---
-// The regex handles Render's URL, all Vercel dynamic subdomains, and localhost.
 const allowedOriginsRegex = /^(https:\/\/testgenius-hosting\.onrender\.com|https:\/\/.*\.vercel\.app|http:\/\/localhost:5173)$/;
 const corsOptions = {
   origin: (origin, callback) => {
@@ -154,13 +158,12 @@ const corsOptions = {
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true, // This is crucial for allowing cookies to be sent
+  credentials: true,
 };
 app.use(cors(corsOptions));
 app.use(express.json());
 
 // --- Other Middlewares ---
-// The session middleware needs to be after CORS and body parser
 app.use(session(sessionConfig));
 app.use(passport.initialize());
 app.use(passport.session());
