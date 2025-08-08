@@ -29,14 +29,18 @@ const passport = configurePassport();
 const sessionConfig = createSessionConfig();
 
 // --- Middlewares ---
+// Verify these domains and ensure your actual Vercel URL is included here.
 const allowedOrigins = [
-  'https://test-genius-hosting.vercel.app',
-  'http://localhost:5173'
+  'https://test-genius-hosting.vercel.app/', // Your Vercel frontend URL
+  'https://testgenius-hosting.onrender.com', // The new Render backend URL
+  'http://localhost:5173' // Your local development URL
 ];
 
 const corsOptions = {
   origin: function (origin, callback) {
-    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+    // Check if the origin is in our allowed list, or if the origin is undefined
+    // (which happens for same-origin requests or cURL)
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -57,7 +61,7 @@ app.use('/api/github', githubRoutes);
 app.use('/api/ai', aiRoutes);
 
 // --- Serve React Frontend in Production ---
-// CORRECTED: The path is now set to 'dist' for Vite projects.
+// The path is now set to 'dist' for Vite projects.
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../client/dist')));
   app.get('*', (req, res) => {
@@ -73,6 +77,10 @@ app.get("/", async(req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+
+
+
 
 
 
