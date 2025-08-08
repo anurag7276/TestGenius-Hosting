@@ -28,28 +28,37 @@ const passport = configurePassport();
 // Call the new createSessionConfig function to get the config object
 const sessionConfig = createSessionConfig();
 
-// --- Middlewares ---
-// Verify these domains and ensure your actual Vercel URL is included here.
-const allowedOrigins = [
-  'https://test-genius-hosting.vercel.app/', // Your Vercel frontend URL
-  'https://testgenius-hosting.onrender.com', // The new Render backend URL
-  'http://localhost:5173' // Your local development URL
-];
+// --- CORS Middleware Configuration ---
+if (process.env.NODE_ENV === 'production') {
+  // In production, we explicitly allow our Vercel and Render URLs.
+  // This is a secure configuration.
+  const allowedOrigins = [
+    'https://test-genius-hosting.vercel.app/', // Your Vercel frontend URL
+    'https://testgenius-hosting.onrender.com'  // The new Render backend URL
+  ];
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Check if the origin is in our allowed list, or if the origin is undefined
-    // (which happens for same-origin requests or cURL)
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-};
+  const corsOptions = {
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like a cURL request or a same-origin request).
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+  };
+  app.use(cors(corsOptions));
+} else {
+  // In development, we allow all origins for easy testing.
+  // This is safe for local development, but not for production.
+  app.use(cors({
+    origin: '*',
+    credentials: true,
+  }));
+}
 
-app.use(cors(corsOptions));
+// --- Other Middlewares ---
 app.use(express.json());
 app.use(session(sessionConfig));
 app.use(passport.initialize());
@@ -61,7 +70,7 @@ app.use('/api/github', githubRoutes);
 app.use('/api/ai', aiRoutes);
 
 // --- Serve React Frontend in Production ---
-// The path is now set to 'dist' for Vite projects.
+// The path is now correctly set to 'dist' for Vite projects.
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../client/dist')));
   app.get('*', (req, res) => {
@@ -77,7 +86,6 @@ app.get("/", async(req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });
-
 
 
 
