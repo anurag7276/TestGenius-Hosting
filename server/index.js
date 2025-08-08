@@ -98,10 +98,7 @@
 
 
 
-
-
-
-// index.js
+// TestGenius/server/index.js
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -114,8 +111,8 @@ import { fileURLToPath } from 'url';
 import passport from 'passport';
 import { Strategy as GitHubStrategy } from 'passport-github2';
 
-// Import all modularized components
-import { createSessionConfig } from './config/sessionConfig.js';
+// Import the new modularized session configuration
+import { createSessionConfigWithMongo } from './config/sessionConfig.js'; 
 import authRoutes from './routes/authRoutes.js';
 import githubRoutes from './routes/githubRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
@@ -128,14 +125,14 @@ const PORT = process.env.PORT || 3001;
 
 // --- Configure Passport and GitHub Strategy ---
 passport.use(new GitHubStrategy({
-    clientID: process.env.GITHUB_CLIENT_ID,
-    clientSecret: process.env.GITHUB_CLIENT_SECRET,
-    // The callbackURL must be the production URL for Render
-    callbackURL: process.env.GITHUB_CALLBACK_URL
-  },
-  function(accessToken, refreshToken, profile, done) {
-    return done(null, profile);
-  }
+  clientID: process.env.GITHUB_CLIENT_ID,
+  clientSecret: process.env.GITHUB_CLIENT_SECRET,
+  // The callbackURL must be the production URL for Render
+  callbackURL: process.env.GITHUB_CALLBACK_URL
+},
+function(accessToken, refreshToken, profile, done) {
+  return done(null, profile);
+}
 ));
 
 passport.serializeUser(function(user, done) {
@@ -146,12 +143,8 @@ passport.deserializeUser(function(user, done) {
   done(null, user);
 });
 
-// Create session configuration, checking for the required secret
-if (!process.env.SESSION_SECRET) {
-  console.error("FATAL ERROR: SESSION_SECRET is not defined. Please set it in your environment variables.");
-  process.exit(1);
-}
-const sessionConfig = createSessionConfig();
+// Create the new session configuration with MongoDB store
+const sessionConfig = createSessionConfigWithMongo();
 
 // --- CORS Middleware Configuration ---
 // This robust regex handles Render's URL, all Vercel dynamic subdomains,
@@ -179,8 +172,6 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // --- API Routes ---
-
-// All other modular routes are added here.
 app.use('/api', authRoutes);
 app.use('/api/github', githubRoutes);
 app.use('/api/ai', aiRoutes);
@@ -194,7 +185,7 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-app.get("/" ,async(req,res)=>{
+app.get("/", async(req,res)=>{
   res.send("Welcome to TestGenius 🚀😊")
 })
 
