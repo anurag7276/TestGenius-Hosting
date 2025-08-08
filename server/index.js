@@ -31,19 +31,17 @@ const sessionConfig = createSessionConfig();
 // --- CORS Middleware Configuration ---
 if (process.env.NODE_ENV === 'production') {
   // In production, we explicitly allow our Vercel and Render URLs.
-  // This is a secure configuration. We now include the trailing slash to be safe.
+  // This is a more flexible configuration that checks if the origin starts with an allowed domain.
   const allowedOrigins = [
     'https://test-genius-hosting.vercel.app',
-    'https://test-genius-hosting.vercel.app/', // Allow with a trailing slash
-    'https://testgenius-hosting.onrender.com',
-    'https://testgenius-hosting.onrender.com/' // Allow with a trailing slash
+    'https://testgenius-hosting.onrender.com'
   ];
 
   const corsOptions = {
     origin: (origin, callback) => {
       // Allow requests with no origin (like a cURL request or a same-origin request).
-      // Also, check if the origin is in our list.
-      if (!origin || allowedOrigins.includes(origin)) {
+      // Use the .some() method with .startsWith() for a more forgiving check.
+      if (!origin || allowedOrigins.some(allowedOrigin => origin.startsWith(allowedOrigin))) {
         callback(null, true);
       } else {
         // Log the exact origin that was blocked for easier debugging.
