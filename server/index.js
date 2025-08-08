@@ -33,8 +33,8 @@ if (process.env.NODE_ENV === 'production') {
   // In production, we explicitly allow our Vercel and Render URLs.
   // This is a secure configuration.
   const allowedOrigins = [
-    'https://test-genius-hosting.vercel.app/', // Your Vercel frontend URL
-    'https://testgenius-hosting.onrender.com'  // The new Render backend URL
+    'https://test-genius-hosting.vercel.app', // Your Vercel frontend URL
+    'https://testgenius-hosting.onrender.com'  // The new Render backend URL
   ];
 
   const corsOptions = {
@@ -65,30 +65,31 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // --- API Routes ---
+// It is CRITICAL that all API routes are defined BEFORE the static file serving.
+// This ensures that requests to `/api/*` are handled by your server, not by the React app.
 app.use('/api', authRoutes);
 app.use('/api/github', githubRoutes);
 app.use('/api/ai', aiRoutes);
 
 // --- Serve React Frontend in Production ---
-// The path is now correctly set to 'dist' for Vite projects.
+// This block must be placed AFTER all API routes.
+// It serves the static files and handles client-side routing.
 if (process.env.NODE_ENV === 'production') {
+  // This middleware tells Express to serve static files from the 'dist' folder.
   app.use(express.static(path.join(__dirname, '../client/dist')));
+
+  // This catch-all route is for client-side routing. It sends the `index.html` file
+  // for any request that doesn't match an API route or a static file.
   app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../client/dist', 'index.html'));
   });
 }
 
-app.get("/", async(req, res) => {
-  res.send("Welcome to TestGenius 🚀😊");
-});
 
 // --- Start the Server ---
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });
-
-
-
 
 
 
