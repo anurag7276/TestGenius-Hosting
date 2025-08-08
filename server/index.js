@@ -31,17 +31,15 @@ const sessionConfig = createSessionConfig();
 // --- CORS Middleware Configuration ---
 if (process.env.NODE_ENV === 'production') {
   // In production, we explicitly allow our Vercel and Render URLs.
-  // This is a more flexible configuration that checks if the origin starts with an allowed domain.
-  const allowedOrigins = [
-    'https://test-genius-hosting.vercel.app',
-    'https://testgenius-hosting.onrender.com'
-  ];
+  // We're now using a regular expression for a more robust match.
+  // This will handle variations like trailing slashes automatically.
+  const allowedOriginsRegex = /^(https:\/\/test-genius-hosting\.vercel\.app|https:\/\/testgenius-hosting\.onrender\.com)/;
 
   const corsOptions = {
     origin: (origin, callback) => {
       // Allow requests with no origin (like a cURL request or a same-origin request).
-      // Use the .some() method with .startsWith() for a more forgiving check.
-      if (!origin || allowedOrigins.some(allowedOrigin => origin.startsWith(allowedOrigin))) {
+      // Check if the origin matches our regular expression.
+      if (!origin || allowedOriginsRegex.test(origin)) {
         callback(null, true);
       } else {
         // Log the exact origin that was blocked for easier debugging.
