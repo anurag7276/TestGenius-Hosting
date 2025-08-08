@@ -20,7 +20,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 3001;
 
 // Call the new configurePassport function to set up Passport
 const passport = configurePassport();
@@ -31,9 +31,8 @@ const sessionConfig = createSessionConfig();
 // --- CORS Middleware Configuration ---
 if (process.env.NODE_ENV === 'production') {
   // In production, we explicitly allow our Vercel and Render URLs.
-  // We're now using a regular expression for a more robust match.
-  // This will handle variations like trailing slashes automatically.
-  const allowedOriginsRegex = /^(https:\/\/test-genius-hosting\.vercel\.app|https:\/\/testgenius-hosting\.onrender\.com)/;
+  // The new regex now correctly handles Vercel's dynamic subdomains.
+  const allowedOriginsRegex = /^(https:\/\/testgenius-hosting\.onrender\.com|https:\/\/[^\/]+\.vercel\.app)$/;
 
   const corsOptions = {
     origin: (origin, callback) => {
