@@ -30,14 +30,13 @@ const sessionConfig = createSessionConfig();
 
 // --- CORS Middleware Configuration ---
 if (process.env.NODE_ENV === 'production') {
-  // In production, we explicitly allow our Vercel and Render URLs.
-  // The new regex now correctly handles Vercel's dynamic subdomains.
-  const allowedOriginsRegex = /^(https:\/\/testgenius-hosting\.onrender\.com|https:\/\/[^\/]+\.vercel\.app)$/;
+  // The new, more robust regex will match the Render URL OR any subdomain of vercel.app
+  const allowedOriginsRegex = /^(https:\/\/testgenius-hosting\.onrender\.com|https:\/\/.*\.vercel\.app)$/;
 
   const corsOptions = {
     origin: (origin, callback) => {
       // Allow requests with no origin (like a cURL request or a same-origin request).
-      // Check if the origin matches our regular expression.
+      // Check if the origin matches our new, more flexible regular expression.
       if (!origin || allowedOriginsRegex.test(origin)) {
         callback(null, true);
       } else {
@@ -51,7 +50,6 @@ if (process.env.NODE_ENV === 'production') {
   app.use(cors(corsOptions));
 } else {
   // In development, we allow all origins for easy testing.
-  // This is safe for local development, but not for production.
   app.use(cors({
     origin: '*',
     credentials: true,
@@ -66,20 +64,15 @@ app.use(passport.session());
 
 // --- API Routes ---
 // It is CRITICAL that all API routes are defined BEFORE the static file serving.
-// This ensures that requests to `/api/*` are handled by your server, not by the React app.
 app.use('/api', authRoutes);
 app.use('/api/github', githubRoutes);
 app.use('/api/ai', aiRoutes);
 
 // --- Serve React Frontend in Production ---
 // This block must be placed AFTER all API routes.
-// It serves the static files and handles client-side routing.
 if (process.env.NODE_ENV === 'production') {
-  // This middleware tells Express to serve static files from the 'dist' folder.
   app.use(express.static(path.join(__dirname, '../client/dist')));
 
-  // This catch-all route is for client-side routing. It sends the `index.html` file
-  // for any request that doesn't match an API route or a static file.
   app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../client/dist', 'index.html'));
   });
@@ -89,6 +82,7 @@ if (process.env.NODE_ENV === 'production') {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
 
 
 
