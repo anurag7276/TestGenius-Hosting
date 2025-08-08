@@ -31,18 +31,23 @@ const sessionConfig = createSessionConfig();
 // --- CORS Middleware Configuration ---
 if (process.env.NODE_ENV === 'production') {
   // In production, we explicitly allow our Vercel and Render URLs.
-  // This is a secure configuration.
+  // This is a secure configuration. We now include the trailing slash to be safe.
   const allowedOrigins = [
-    'https://test-genius-hosting.vercel.app', // Your Vercel frontend URL
-    'https://testgenius-hosting.onrender.com'  // The new Render backend URL
+    'https://test-genius-hosting.vercel.app',
+    'https://test-genius-hosting.vercel.app/', // Allow with a trailing slash
+    'https://testgenius-hosting.onrender.com',
+    'https://testgenius-hosting.onrender.com/' // Allow with a trailing slash
   ];
 
   const corsOptions = {
     origin: (origin, callback) => {
       // Allow requests with no origin (like a cURL request or a same-origin request).
+      // Also, check if the origin is in our list.
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
+        // Log the exact origin that was blocked for easier debugging.
+        console.error(`CORS blocked request from origin: ${origin}`);
         callback(new Error('Not allowed by CORS'));
       }
     },
@@ -85,11 +90,14 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-
 // --- Start the Server ---
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+
+
+
 
 
 
