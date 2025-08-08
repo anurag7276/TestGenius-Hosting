@@ -1,3 +1,4 @@
+// index.js
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -56,6 +57,7 @@ app.use('/api/github', githubRoutes);
 app.use('/api/ai', aiRoutes);
 
 // --- Serve React Frontend in Production ---
+// CORRECTED: The path is now set to 'dist' for Vite projects.
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../client/dist')));
   app.get('*', (req, res) => {
@@ -71,7 +73,6 @@ app.get("/", async(req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });
-
 
 
 
