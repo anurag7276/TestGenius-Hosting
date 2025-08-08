@@ -131,7 +131,7 @@ passport.use(new GitHubStrategy({
     clientID: process.env.GITHUB_CLIENT_ID,
     clientSecret: process.env.GITHUB_CLIENT_SECRET,
     // The callbackURL must be the production URL for Render
-    callbackURL: "https://testgenius-hosting.onrender.com/api/github/callback"
+    callbackURL: process.env.GITHUB_CALLBACK_URL
   },
   function(accessToken, refreshToken, profile, done) {
     return done(null, profile);
@@ -156,7 +156,7 @@ const sessionConfig = createSessionConfig();
 // --- CORS Middleware Configuration ---
 // This robust regex handles Render's URL, all Vercel dynamic subdomains,
 // and localhost for local development.
-const allowedOriginsRegex = /^(https:\/\/testgenius-hosting\.onrender\.com|https:\/\/.*\.vercel\.app|http:\/\/localhost:3000)$/;
+const allowedOriginsRegex = /^(https:\/\/testgenius-hosting\.onrender\.com|https:\/\/.*\.vercel\.app|http:\/\/localhost:5173)$/;
 
 const corsOptions = {
   origin: (origin, callback) => {
