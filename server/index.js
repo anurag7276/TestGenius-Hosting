@@ -1,3 +1,4 @@
+// index.js
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -30,7 +31,7 @@ const sessionConfig = createSessionConfig();
 // --- Middlewares ---
 const allowedOrigins = [
   'https://test-genius-hosting.vercel.app', // Corrected: removed trailing slash
-  'http://localhost:3000' // For local development
+  'http://localhost:5173' // For local development
 ];
 
 const corsOptions = {
@@ -61,11 +62,11 @@ app.use('/api/github', githubRoutes);
 app.use('/api/ai', aiRoutes);
 
 // --- Serve React Frontend in Production ---
-// Uncommenting this code to serve your frontend.
+// CORRECTED: The path is now set to 'dist' for Vite projects.
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/build')));
+  app.use(express.static(path.join(__dirname, '../client/dist')));
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+    res.sendFile(path.join(__dirname, '../client/dist', 'index.html'));
   });
 }
 
@@ -77,9 +78,8 @@ app.get("/", async(req, res) => {
 // We added '0.0.0.0' to ensure the server listens on all network interfaces,
 // which is required for platforms like Render.
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
-
 
 
 
